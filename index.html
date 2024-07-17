@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lou Geh Library System</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <h1>Lou Geh Library System</h1>
+    <div id="main">
+        <h2>Register Reader</h2>
+        <form action="controllers/UserController.php" method="post">
+            <label for="family_name">Family Name:</label>
+            <input type="text" id="family_name" name="family_name" required><br><br>
+            <label for="first_name">First Name:</label>
+            <input type="text" id="first_name" name="first_name" required><br><br>
+            <label for="city">City:</label>
+            <input type="text" id="city" name="city" required><br><br>
+            <label for="dob">Date of Birth:</label>
+            <input type="date" id="dob" name="dob" required><br><br>
+            <input type="submit" value="Register">
+        </form>
+    </div>
+    <script src="js/app.js"></script>
+</body>
+</html>
