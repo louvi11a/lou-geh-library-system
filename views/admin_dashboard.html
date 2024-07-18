@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - Lou Geh Library System</title>
-    <link rel="stylesheet" href="../css/style.css"> <!-- Link your CSS file here -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../css/style.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="../js/admin_dashboard.js"></script> <!-- Your JavaScript file -->
-
 </head>
 <body>
     <header>
@@ -34,18 +34,22 @@
                     <input type="text" id="author" name="author" placeholder="Author" required>
                     <input type="text" id="publication_year" name="publication_year" placeholder="Publication Year" required>
                     <input type="text" id="number_of_pages" name="number_of_pages" placeholder="Number of Pages" required>
-                    <input type="text" id="publisher_id" name="publisher_id" placeholder="Publisher ID" required>
+                    
+                    <select id="publisher_id" name="publisher_id" required>
+                        <option value="">Select Publisher</option>
+                        <!-- Publishers will be dynamically populated here -->
+                    </select>                    
                     <input type="hidden" name="action" value="addBook">
-
-                    <div >
-                        <h3>Select Parent Category:</h3>
-                        <select id="bookCategories" name="category[]" multiple>
-                            <!-- Categories will be dynamically populated here -->
-                        </select>
+                    <div class="container-fluid">
+                        <div class="row">
+                            <div class="col-12">
+                                <h3>Select Parent Category:</h3>
+                                <select id="bookCategories" name="category[]" multiple class="form-control">
+                                    <!-- Categories will be dynamically populated here -->
+                                </select>
+                            </div>
+                        </div>
                     </div>
-                    
-                    
-                    
                     <button type="submit">Add Book</button>
                 </form>
                 <div id="addBookMessage"></div>
@@ -59,11 +63,9 @@
                 <form id="addPublisherForm" action="../controllers/AdminController.php" method="post">
                     <input type="text" id="name" name="name" placeholder="Publisher Name" required>
                     <input type="text" id="location" name="location" placeholder="Location" required>
-
                     <input type="hidden" name="action" value="addPublisher">
                     <button type="submit">Add Publisher</button>
                 </form>
-                
                 <div id="addPublisherMessage"></div> <!-- Display add book status/messages here -->
             </div>
         </div>
@@ -74,21 +76,17 @@
                 <h2>Add Category</h2>
                 <form id="addCategoryForm" action="../controllers/CategoryController.php" method="post">
                     <input type="text" id="categoryName" name="categoryName" placeholder="Category Name" required>
-                    
                     <!-- Optional: Select parent category -->
                     <select id="parentCategory" name="parentCategory">
                         <option value="">Select Parent Category</option>
                         <!-- Populate with existing categories from database if needed -->
                     </select>
-                    
                     <input type="hidden" name="action" value="addCategory">
                     <button type="submit">Add Category</button>
                 </form>
-                
                 <div id="addCategoryMessage"></div> <!-- Display add category status/messages here -->
             </div>
         </div>
-        
         
         <div id="addMemberModal" class="modal">
             <div class="modal-content">
@@ -101,20 +99,31 @@
                     <input type="text" id="first_name" name="first_name" placeholder="First Name" required>
                     <input type="text" id="city" name="city" placeholder="City" required>
                     <input type="date" id="dob" name="dob" placeholder="Date of Birth" required>
-                    
                     <input type="hidden" name="action" value="addMember">
                     <button type="submit">Add Member</button>
                 </form>
-                
                 <div id="addMemberMessage"></div> <!-- Display add member status/messages here -->
             </div>
         </div>
-        
+
+        <!-- Modal for displaying readers -->
+        <div id="viewReadersModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Readers List</h2>
+                <div id="readersTableContainer">
+                    <!-- Table will be dynamically inserted here -->
+                </div>
+                <div id="readersTableMessage">
+                    <!-- Message for no readers found will be inserted here -->
+                </div>
+            </div>
+        </div>
+
         <!-- Add modals or form sections for other actions (add publisher, view readers) -->
     </main>
     <footer>
         <p>&copy; 2024 Lou Geh Library System. All rights reserved.</p>
     </footer>
-
 </body>
 </html>

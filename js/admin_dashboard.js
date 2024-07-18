@@ -3,13 +3,16 @@ $(document).ready(function() {
     function populateDropdown(data, dropdownId) {
         var dropdown = $(dropdownId);
         dropdown.empty(); // Clear existing options
-        dropdown.append('<option value="">Select a category</option>'); // Add default option
+        dropdown.append('<option value="">Select an option</option>'); // Add default option
 
-        data.forEach(function(item) {
-            dropdown.append('<option value="' + item.category_id + '">' + item.name + '</option>');
-        });
+        if (Array.isArray(data)) {
+            data.forEach(function(item) {
+                dropdown.append('<option value="' + item.id + '">' + item.name + '</option>');
+            });
+        } else {
+            console.error('Data is not an array:', data);
+        }
     }
-
     // Function to fetch categories from the server
     function fetchCategoriesFromServer(callback) {
         $.ajax({
@@ -21,6 +24,22 @@ $(document).ready(function() {
             },
             error: function() {
                 console.error('Error fetching categories.');
+            }
+        });
+    }
+
+    // Function to fetch publishers from the server
+    function fetchPublishersFromServer(callback) {
+        $.ajax({
+            url: '../controllers/getPublishers.php',
+            type: 'GET',
+            dataType: 'json',
+            success: function(response) {
+                localStorage.setItem('publishers', JSON.stringify(response));
+                callback(response); // Pass data to callback function
+            },
+            error: function(xhr, status, error) {
+                console.error('Error fetching publishers:', error);
             }
         });
     }
@@ -51,20 +70,26 @@ $(document).ready(function() {
         }
     }
 
+    function populatePublishersDropdown() {
+        var publishers = JSON.parse(localStorage.getItem('publishers'));
+    
+        if (publishers) {
+            populateDropdown(publishers, '#publisher_id'); // Use the specific dropdown ID
+        } else {
+            fetchPublishersFromServer(function(data) {
+                populateDropdown(data, '#publisher_id');
+            });
+        }
+    }
+
     // Initialize dropdowns on page load
     populateParentCategoriesDropdown();
     populateBookCategoriesDropdown();
+    populatePublishersDropdown();
 
     // Optional: Re-populate when Add Category Modal is shown
     $('#addCategoryModal').on('show.bs.modal', function() {
         populateParentCategoriesDropdown();
-    });
-
-
-
-    // Populate categories when the modal is opened
-    $('#addCategoryModal').on('show.bs.modal', function() {
-        populateParentCategories();
     });
 
 
@@ -212,37 +237,49 @@ $(document).ready(function() {
         });
     });
 
-    // Example: AJAX request to view readers
-    $('#btnViewReaders').click(function() {
-        $.ajax({
-            type: 'POST',
-            url: '../controllers/AdminController.php',
-            data: { action: 'viewReaders' },
-            dataType: 'json',
-            success: function(response) {
-                if (response.length > 0) {
-                    var table = '<h3>Readers</h3><table><tr><th>Reader Number</th><th>Username</th><th>Family Name</th><th>First Name</th><th>City</th><th>Date of Birth</th></tr>';
-                    for (var i = 0; i < response.length; i++) {
-                        table += '<tr>';
-                        table += '<td>' + response[i].reader_number + '</td>';
-                        table += '<td>' + response[i].username + '</td>';
-                        table += '<td>' + response[i].family_name + '</td>';
-                        table += '<td>' + response[i].first_name + '</td>';
-                        table += '<td>' + response[i].city + '</td>';
-                        table += '<td>' + response[i].dob + '</td>';
-                        table += '</tr>';
-                    }
-                    table += '</table>';
-                    $('#viewReadersModal .modal-content').html(table);
-                    $('#viewReadersModal').css('display', 'block');
-                } else {
-                    $('#viewReadersModal .modal-content').html('<p>No readers found.</p>');
-                    $('#viewReadersModal').css('display', 'block');
+// Close modal when clicking on close button
+$('.close').click(function() {
+    $(this).closest('.modal').css('display', 'none');
+});
+
+// AJAX request to view readers
+$('#btnViewReaders').click(function() {
+    $.ajax({
+        type: 'POST',
+        url: '../controllers/AdminController.php',
+        data: { action: 'viewReaders' },
+        dataType: 'json',
+        success: function(response) {
+            if (response.length > 0) {
+                var table = '<h1>Readers</h1><table><tr><th>Reader Number</th><th>Username</th><th>Family Name</th><th>First Name</th><th>City</th><th>Date of Birth</th></tr>';
+                for (var i = 0; i < response.length; i++) {
+                    table += '<tr>';
+                    table += '<td>' + response[i].reader_number + '</td>';
+                    table += '<td>' + response[i].username + '</td>';
+                    table += '<td>' + response[i].family_name + '</td>';
+                    table += '<td>' + response[i].first_name + '</td>';
+                    table += '<td>' + response[i].city + '</td>';
+                    table += '<td>' + response[i].dob + '</td>';
+                    table += '</tr>';
                 }
-            },
-            error: function() {
-                alert('Error fetching readers. Please try again later.');
+                table += '</table>';
+                table += '<button id="btnCloseModal">Close</button>';
+
+                $('#viewReadersModal .modal-content').html(table);
+                $('#viewReadersModal').css('display', 'block');
+                // Close modal when close button is clicked
+                $('#btnCloseModal').click(function() {
+                    $('#viewReadersModal').css('display', 'none');
+                });
+            } else {
+                $('#viewReadersModal .modal-content').html('<p>No readers found.</p>');
+                $('#viewReadersModal').css('display', 'block');
             }
-        });
+        },
+        error: function() {
+            alert('Error fetching readers. Please try again later.');
+        }
     });
+});
+
 });
