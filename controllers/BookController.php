@@ -93,20 +93,27 @@ class BookController {
         }
     }
 
-    public function searchBooks($keyword) {
-        $sql = "SELECT * FROM books WHERE isbn LIKE ? OR title LIKE ? OR author LIKE ?";
-        $stmt = $this->conn->prepare($sql);
-        $keyword = "%$keyword%";
-        $stmt->bind_param("sss", $keyword, $keyword, $keyword);
-        $stmt->execute();
-        $result = $stmt->get_result();
+    public function searchBooks($query) {
+        $searchTerm = "%" . $query . "%";
+        $sql = "
+            SELECT b.title, b.author, b.isbn
+            FROM books b
+            LEFT JOIN book_categories bc ON b.isbn = bc.isbn
+            LEFT JOIN categories c ON bc.category_id = c.category_id
+            WHERE b.title LIKE ? OR b.author LIKE ? OR b.isbn LIKE ? OR c.name LIKE ?
+        ";
+        
+        if ($stmt = $this->conn->prepare($sql)) {
+            $stmt->bind_param("ssss", $searchTerm, $searchTerm, $searchTerm, $searchTerm);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $books = $result->fetch_all(MYSQLI_ASSOC);
+            $stmt->close();
 
-        $books = [];
-        while ($row = $result->fetch_assoc()) {
-            $books[] = $row;
+            return json_encode($books);
+        } else {
+            return json_encode(["error" => "Failed to prepare statement"]);
         }
-
-        return json_encode($books);
     }
 
     public function getAllBooks() {
@@ -123,9 +130,15 @@ class BookController {
 }
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    ini_set('display_errors', 1);
+    ini_set('display_startup_errors', 1);
+    error_reporting(E_ALL);
     $controller = new BookController($conn);
 
     switch ($_POST['action']) {
+        case 'searchBooks':
+            echo $controller->searchBooks($_POST['query']);
+            break;
         case 'addBook':
             $category_ids = isset($_POST['category']) ? $_POST['category'] : [];
             echo $controller->addBook(

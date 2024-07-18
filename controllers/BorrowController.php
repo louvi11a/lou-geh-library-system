@@ -8,59 +8,71 @@ class BorrowController {
         $this->conn = $conn;
     }
 
-    public function getBorrowedBooks() {
-        session_start();
-        $reader_number = $_SESSION['reader_number'];
-        $sql = "SELECT b.title, b.author, b.isbn, c.copy_number, br.return_date 
-                FROM borrowed_books br 
-                JOIN copies c ON br.copy_number = c.copy_number AND br.isbn = c.isbn 
-                JOIN books b ON c.isbn = b.isbn 
-                WHERE br.reader_number=?";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bind_param("i", $reader_number);
-        $stmt->execute();
-        $result = $stmt->get_result();
+    public function getBorrowedBooks($readerNumber) {
+        $query = "
+            SELECT b.title, b.author, b.isbn, bc.copy_number, br.return_date
+            FROM borrows br
+            JOIN books b ON br.isbn = b.isbn
+            JOIN copies bc ON br.copy_number = bc.copy_number
+            WHERE br.reader_number = ?
+        ";
 
-        $borrowedBooks = [];
-        while ($row = $result->fetch_assoc()) {
-            $borrowedBooks[] = $row;
+        if ($stmt = $this->conn->prepare($query)) {
+            $stmt->bind_param("i", $readerNumber);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $books = $result->fetch_all(MYSQLI_ASSOC);
+            $stmt->close();
+
+            return json_encode($books);
+        } else {
+            return json_encode(["error" => "Failed to prepare statement"]);
         }
-        echo json_encode($borrowedBooks);
     }
 
-    public function getBorrowHistory() {
-        session_start();
-        $reader_number = $_SESSION['reader_number'];
-        $sql = "SELECT b.title, b.author, b.isbn, br.borrow_date, br.return_date 
-                FROM borrowed_books br 
-                JOIN books b ON br.isbn = b.isbn 
-                WHERE br.reader_number=?";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bind_param("i", $reader_number);
-        $stmt->execute();
-        $result = $stmt->get_result();
+    public function getBorrowHistory($readerNumber) {
+        $sql = "
+            SELECT b.title, b.author, b.isbn, br.borrow_date, br.return_date
+            FROM borrows br
+            JOIN books b ON br.isbn = b.isbn
+            WHERE br.reader_number = ?
+        ";
+        
+        if ($stmt = $this->conn->prepare($sql)) {
+            $stmt->bind_param("i", $readerNumber);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $borrowHistory = $result->fetch_all(MYSQLI_ASSOC);
+            $stmt->close();
 
-        $borrowHistory = [];
-        while ($row = $result->fetch_assoc()) {
-            $borrowHistory[] = $row;
+            return json_encode($borrowHistory);
+        } else {
+            return json_encode(["error" => "Failed to prepare statement"]);
         }
-        echo json_encode($borrowHistory);
     }
 }
 
 // Handle POST requests
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    ini_set('display_errors', 1);
+    ini_set('display_startup_errors', 1);
+    error_reporting(E_ALL);
+
     $controller = new BorrowController($conn);
+
+    session_start();
+    $readerNumber = $_SESSION['reader_number'];
 
     switch ($_POST['action']) {
         case 'getBorrowedBooks':
-            $controller->getBorrowedBooks();
+            echo $controller->getBorrowedBooks($readerNumber);
             break;
         case 'getBorrowHistory':
-            $controller->getBorrowHistory();
+            echo $controller->getBorrowHistory($readerNumber);
             break;
         default:
-            echo "Invalid action";
+            header('Content-Type: application/json');
+            echo json_encode(["error" => "Invalid action"]);
             break;
     }
 }

@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="../css/style.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="../js/reader_dashboard.js"></script>
+    <!-- Bootstrap CSS for modal -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 </head>
 <body>
     <header>
@@ -25,16 +27,43 @@
             <h2>Borrowed Books</h2>
             <ul id="borrowedBooksList"></ul>
         </section>
+
         <section id="searchBooksSection">
             <h2>Search Books</h2>
             <input type="text" id="searchQuery" placeholder="Search by title, author, ISBN, or category">
             <button id="searchButton">Search</button>
-            <ul id="searchResults"></ul>
+            <select id="searchResultsDropdown"></select>
         </section>
+        
         <section id="borrowHistorySection">
             <h2>Borrow History</h2>
             <ul id="borrowHistoryList"></ul>
         </section>
     </main>
+
+    <!-- Modal for displaying book details -->
+    <div class="modal fade" id="bookModal" tabindex="-1" role="dialog" aria-labelledby="bookModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">Book Title</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>Author:</strong> <span id="modalAuthor">Author Name</span></p>
+                    <p><strong>Availability:</strong> <span id="modalAvailability">Availability Status</span></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="borrowButton" style="display: none;">Borrow</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS for modal -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
