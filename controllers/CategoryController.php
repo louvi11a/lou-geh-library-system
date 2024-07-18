@@ -2,9 +2,20 @@
 include_once '../configs/db.php';
 
 class CategoryController {
+    private $conn;
+
+    public function __construct($conn) {
+        $this->conn = $conn;
+    }
+
     public function addCategory($categoryName, $parentCategory) {
-        $insert_sql = "INSERT INTO categories (name, parent_id) VALUES (?, ?)";
+        $insert_sql = "INSERT INTO categories (name, parent_category_id) VALUES (?, ?)";
         $stmt = $this->conn->prepare($insert_sql);
+
+        if (empty($parentCategory)) {
+            $parentCategory = null;
+        }
+
         $stmt->bind_param("si", $categoryName, $parentCategory);
 
         if ($stmt->execute()) {
@@ -15,34 +26,42 @@ class CategoryController {
         }
     }
 
-
     public function editCategory($id, $name) {
-        global $conn;
-        $sql = "UPDATE categories SET name='$name' WHERE id='$id'";
-        if ($conn->query($sql) === TRUE) {
+        $sql = "UPDATE categories SET name = ? WHERE category_id = ?";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("si", $name, $id);
+
+        if ($stmt->execute()) {
             return "Category updated successfully";
         } else {
-            return "Error updating category: " . $conn->error;
+            return "Error updating category: " . $stmt->error;
         }
     }
 
     public function deleteCategory($id) {
-        global $conn;
-        $sql = "DELETE FROM categories WHERE id='$id'";
-        if ($conn->query($sql) === TRUE) {
+        $sql = "DELETE FROM categories WHERE category_id = ?";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("i", $id);
+
+        if ($stmt->execute()) {
             return "Category deleted successfully";
         } else {
-            return "Error deleting category: " . $conn->error;
+            return "Error deleting category: " . $stmt->error;
         }
+    }
+
+    public function writeToConsole($message) {
+        echo "<script>console.error('PHP Error: " . addslashes($message) . "');</script>";
     }
 }
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $controller = new CategoryController();
+    include_once '../configs/db.php';
+    $controller = new CategoryController($conn);
 
     switch ($_POST['action']) {
         case 'addCategory':
-            $response = $controller->addCategory($_POST['name'], $_POST['parent_category_id']);
+            $response = $controller->addCategory($_POST['categoryName'], $_POST['parentCategory']);
             echo $response;
             break;
         case 'editCategory':

@@ -1,7 +1,54 @@
 // admin_dashboard.js
-
 $(document).ready(function() {
-    // Open modal for Add Book button
+
+    // Function to populate parent category dropdown
+    function populateParentCategories() {
+        // Check if categories are already stored in localStorage
+        var categories = JSON.parse(localStorage.getItem('categories'));
+        
+        if (categories) {
+            populateDropdown(categories);
+        } else {
+            fetchCategoriesFromServer();
+        }
+    }
+
+    // Function to fetch categories from the server
+    function fetchCategoriesFromServer() {
+        $.ajax({
+            url: '../controllers/getCategories.php',
+            type: 'GET',
+            success: function(response) {
+                localStorage.setItem('categories', JSON.stringify(response));
+                populateDropdown(response);
+            },
+            error: function() {
+                console.error('Error fetching categories.');
+            }
+        });
+    }
+
+    // Function to populate the dropdown with categories
+    function populateDropdown(categories) {
+        var parentCategorySelect = $('#parentCategory');
+        parentCategorySelect.empty(); // Clear existing options
+        parentCategorySelect.append('<option value="">Select Parent Category</option>');
+        
+        categories.forEach(function(category) {
+            parentCategorySelect.append('<option value="' + category.category_id + '">' + category.name + '</option>');
+        });
+    }
+
+    // Populate categories on page load
+    populateParentCategories();
+
+    // Populate categories when the modal is opened
+    $('#addCategoryModal').on('show.bs.modal', function() {
+        populateParentCategories();
+    });
+
+
+// Open modal for Add Book button
     $('#btnAddBook').click(function() {
         $('#addBookModal').css('display', 'block');
     });
@@ -109,8 +156,7 @@ $(document).ready(function() {
             },
             success: function(response) {
                 $('#addCategoryMessage').html('<p style="color: green;">' + response + '</p>');
-                // Optionally clear the form after successful submission
-                $('#addCategoryForm')[0].reset();
+                $('#addCategoryForm')[0].reset();  // Optionally reset form fields
             },
             error: function() {
                 $('#addCategoryMessage').html('<p style="color: red;">Error adding category. Please try again later.</p>');
