@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Lou Geh Library System</title>
+    <link rel="stylesheet" href="../css/style.css"> <!-- Link your CSS file here -->
+</head>
+<body>
+    <header>
+        <h1>Welcome to Lou Geh Library System</h1>
+    </header>
+    <main>
+        <section class="register-section">
+            <h2>Register</h2>
+                <!-- In register.html -->
+                <form id="registerForm" action="../controllers/UserController.php" method="post">
+                    <input type="text" id="username" name="username" placeholder="Username" required>
+                    <input type="text" id="familyName" name="family_name" placeholder="Family Name" required>
+                    <input type="text" id="firstName" name="first_name" placeholder="First Name" required>
+                    <input type="text" id="city" name="city" placeholder="City" required>
+                    <input type="date" id="dob" name="dob" placeholder="Date of Birth" required>
+                    <input type="password" id="password" name="password" placeholder="Password" required>
+                    <input type="hidden" name="action" value="registerReader">
+
+                    <button type="submit">Register</button>
+                </form>
+
+            
+            <div id="registerMessage"></div> <!-- Display registration status/messages here -->
+            <p>Already registered? <a href="../index.html">Login</a></p>
+
+        </section>
+        
+    </main>
+    <footer>
+        <p>&copy; 2024 Lou Geh Library System. All rights reserved.</p>
+    </footer>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="../js/app.js"></script> <!-- Your JavaScript file -->
+    <script>
+        // AJAX registration request
+        $(document).ready(function() {
+            $('#registerForm').submit(function(event) {
+                event.preventDefault(); // Prevent default form submission
+
+                $.ajax({
+                    type: 'POST',
+                    url: '../controllers/UserController.php',
+                    data: {
+                        action: 'registerReader',
+                        username: $('#username').val(),  
+                        family_name: $('#familyName').val(),
+                        first_name: $('#firstName').val(),
+                        city: $('#city').val(),
+                        dob: $('#dob').val(),
+                        password: $('#password').val()
+                    },
+                    success: function(response) {
+                        $('#registerMessage').html('<p style="color: green;">' + response + '</p>');
+                    },
+                    error: function() {
+                        $('#registerMessage').html('<p style="color: red;">Error registering. Please try again later.</p>');
+                    }
+                });
+            });
+        });
+
+    </script>
+</body>
+</html>

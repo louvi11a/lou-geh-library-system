@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Lou Geh Library System</title>
+    <link rel="stylesheet" href="../css/style.css"> <!-- Link your CSS file here -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="../js/admin_dashboard.js"></script> <!-- Your JavaScript file -->
+</head>
+<body>
+    <header>
+        <h1>Welcome to Admin Dashboard</h1>
+    </header>
+    <main>
+        <section class="action-buttons">
+            <button id="btnAddBook">Add Book</button>
+            <button id="btnAddPublisher">Add Publisher</button>
+            <button id="btnAddCategory">Add Category</button>
+            <button id="btnAddMember">Add Member</button>
+            <button id="btnViewReaders">View Readers</button>
+            <!-- Add more buttons as needed -->
+        </section>
+        
+        <!-- Modals for adding book, publisher, category, member -->
+        <div id="addBookModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Add Book</h2>
+                <form id="addBookForm" action="../controllers/BookController.php" method="post">
+                    <input type="text" id="isbn" name="isbn" placeholder="ISBN" required>
+                    <input type="text" id="title" name="title" placeholder="Title" required>
+                    <input type="text" id="author" name="author" placeholder="Author" required>
+                    <input type="text" id="publication_year" name="publication_year" placeholder="Publication Year" required>
+                    <input type="text" id="number_of_pages" name="number_of_pages" placeholder="Number of Pages" required>
+                    <input type="text" id="publisher_id" name="publisher_id" placeholder="Publisher ID" required>
+                    <input type="hidden" name="action" value="addBook">
+
+                    <div>
+                        <h3>Select Categories:</h3>
+                        <!-- Example: checkboxes for categories -->
+                        <input type="checkbox" id="category1" name="category[]" value="1">
+                        <label for="category1">Category 1</label><br>
+                        
+                        <input type="checkbox" id="category2" name="category[]" value="2">
+                        <label for="category2">Category 2</label><br>
+                        
+                        <input type="checkbox" id="category3" name="category[]" value="3">
+                        <label for="category3">Category 3</label><br>
+                    </div>
+                    
+                    
+                    
+                    <button type="submit">Add Book</button>
+                </form>
+                <div id="addBookMessage"></div>
+            </div>
+        </div>
+        
+        <div id="addPublisherModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Add Publisher</h2>
+                <form id="addPublisherForm" action="../controllers/AdminController.php" method="post">
+                    <input type="text" id="name" name="name" placeholder="Publisher Name" required>
+                    <input type="text" id="location" name="location" placeholder="Location" required>
+
+                    <input type="hidden" name="action" value="addPublisher">
+                    <button type="submit">Add Publisher</button>
+                </form>
+                
+                <div id="addPublisherMessage"></div> <!-- Display add book status/messages here -->
+            </div>
+        </div>
+
+        <div id="addCategoryModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Add Category</h2>
+                <form id="addCategoryForm" action="../controllers/AdminController.php" method="post">
+                    <input type="text" id="categoryName" name="categoryName" placeholder="Category Name" required>
+                    
+                    <!-- Optional: Select parent category -->
+                    <select id="parentCategory" name="parentCategory">
+                        <option value="">Select Parent Category</option>
+                        <!-- Populate with existing categories from database if needed -->
+                    </select>
+                    
+                    <input type="hidden" name="action" value="addCategory">
+                    <button type="submit">Add Category</button>
+                </form>
+                
+                <div id="addCategoryMessage"></div> <!-- Display add category status/messages here -->
+            </div>
+        </div>
+        
+        <div id="addMemberModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Add Member</h2>
+                <form id="addMemberForm" action="../controllers/AdminController.php" method="post">
+                    <input type="text" id="username" name="username" placeholder="Username" required>
+                    <input type="password" id="password" name="password" placeholder="Password" required>
+                    <input type="text" id="family_name" name="family_name" placeholder="Family Name" required>
+                    <input type="text" id="first_name" name="first_name" placeholder="First Name" required>
+                    <input type="text" id="city" name="city" placeholder="City" required>
+                    <input type="date" id="dob" name="dob" placeholder="Date of Birth" required>
+                    
+                    <input type="hidden" name="action" value="addMember">
+                    <button type="submit">Add Member</button>
+                </form>
+                
+                <div id="addMemberMessage"></div> <!-- Display add member status/messages here -->
+            </div>
+        </div>
+        
+        <!-- Add modals or form sections for other actions (add publisher, view readers) -->
+    </main>
+    <footer>
+        <p>&copy; 2024 Lou Geh Library System. All rights reserved.</p>
+    </footer>
+
+</body>
+</html>

@@ -4,24 +4,77 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lou Geh Library System</title>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="../css/style.css"> <!-- Link your CSS file here -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="../js/app.js"></script> <!-- Your JavaScript file -->
 </head>
 <body>
-    <h1>Lou Geh Library System</h1>
-    <div id="main">
-        <h2>Register Reader</h2>
-        <form action="controllers/UserController.php" method="post">
-            <label for="family_name">Family Name:</label>
-            <input type="text" id="family_name" name="family_name" required><br><br>
-            <label for="first_name">First Name:</label>
-            <input type="text" id="first_name" name="first_name" required><br><br>
-            <label for="city">City:</label>
-            <input type="text" id="city" name="city" required><br><br>
-            <label for="dob">Date of Birth:</label>
-            <input type="date" id="dob" name="dob" required><br><br>
-            <input type="submit" value="Register">
-        </form>
-    </div>
-    <script src="js/app.js"></script>
+    <header>
+        <h1>Welcome to Lou Geh Library System</h1>
+    </header>
+    <main>
+        <section class="login-section">
+            <h2>Login</h2>
+            <form id="loginForm" action="../controllers/UserController.php" method="post">
+                <input type="text" id="username" name="username" placeholder="Username" required>
+                <input type="password" id="password" name="password" placeholder="Password" required>
+                <button type="submit">Login</button>
+            </form>
+            
+            <p>New here? <a href="views/register.html">Register</a></p>
+            <div id="loginMessage"></div> <!-- Display login status/messages here -->
+        </section>
+        
+        <!-- Additional sections/navigation links -->
+        <section class="navigation-section">
+            <h2>Explore Lou Geh Library</h2>
+            <ul>
+                <li><a href="books.html">Search Books</a></li>
+                <li><a href="about.html">About the Library</a></li>
+                <li><a href="contact.html">Contact Us</a></li>
+            </ul>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2024 Lou Geh Library System. All rights reserved.</p>
+    </footer>
+
+    <script>
+        // AJAX login request
+        $(document).ready(function() {
+            $('#loginForm').submit(function(event) {
+                event.preventDefault(); // Prevent default form submission
+    
+                var username = $('#username').val();
+                var password = $('#password').val();
+    
+                $.ajax({
+                    type: 'POST',
+                    url: 'controllers/UserController.php',
+                    data: {
+                        action: 'login',
+                        username: username,
+                        password: password
+                    },
+                    success: function(response) {
+                        if (response.trim() === 'reader') {
+                            // Redirect to reader dashboard or perform reader actions
+                            window.location.href = 'views/reader_dashboard.html';
+                        } else if (response.trim() === 'admin') {
+                            // Redirect to admin dashboard or perform admin actions
+                            window.location.href = 'views/admin_dashboard.html';
+                        } else {
+                            // Display error message
+                            $('#loginMessage').html('<p style="color: red;">Invalid username or password.</p>');
+                        }
+                    },
+                    error: function() {
+                        $('#loginMessage').html('<p style="color: red;">Error logging in. Please try again later.</p>');
+                    }
+                });
+            });
+        });
+    </script>
+    
 </body>
 </html>
