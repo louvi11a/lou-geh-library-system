@@ -37,17 +37,11 @@
                     <input type="text" id="publisher_id" name="publisher_id" placeholder="Publisher ID" required>
                     <input type="hidden" name="action" value="addBook">
 
-                    <div>
-                        <h3>Select Categories:</h3>
-                        <!-- Example: checkboxes for categories -->
-                        <input type="checkbox" id="category1" name="category[]" value="1">
-                        <label for="category1">Category 1</label><br>
-                        
-                        <input type="checkbox" id="category2" name="category[]" value="2">
-                        <label for="category2">Category 2</label><br>
-                        
-                        <input type="checkbox" id="category3" name="category[]" value="3">
-                        <label for="category3">Category 3</label><br>
+                    <div >
+                        <h3>Select Parent Category:</h3>
+                        <select id="bookCategories" name="category[]" multiple>
+                            <!-- Categories will be dynamically populated here -->
+                        </select>
                     </div>
                     
                     

@@ -1,26 +1,23 @@
-// admin_dashboard.js
 $(document).ready(function() {
+    // General function to populate a dropdown
+    function populateDropdown(data, dropdownId) {
+        var dropdown = $(dropdownId);
+        dropdown.empty(); // Clear existing options
+        dropdown.append('<option value="">Select a category</option>'); // Add default option
 
-    // Function to populate parent category dropdown
-    function populateParentCategories() {
-        // Check if categories are already stored in localStorage
-        var categories = JSON.parse(localStorage.getItem('categories'));
-        
-        if (categories) {
-            populateDropdown(categories);
-        } else {
-            fetchCategoriesFromServer();
-        }
+        data.forEach(function(item) {
+            dropdown.append('<option value="' + item.category_id + '">' + item.name + '</option>');
+        });
     }
 
     // Function to fetch categories from the server
-    function fetchCategoriesFromServer() {
+    function fetchCategoriesFromServer(callback) {
         $.ajax({
             url: '../controllers/getCategories.php',
             type: 'GET',
             success: function(response) {
                 localStorage.setItem('categories', JSON.stringify(response));
-                populateDropdown(response);
+                callback(response); // Pass data to callback function
             },
             error: function() {
                 console.error('Error fetching categories.');
@@ -28,19 +25,42 @@ $(document).ready(function() {
         });
     }
 
-    // Function to populate the dropdown with categories
-    function populateDropdown(categories) {
-        var parentCategorySelect = $('#parentCategory');
-        parentCategorySelect.empty(); // Clear existing options
-        parentCategorySelect.append('<option value="">Select Parent Category</option>');
+    // Function to populate parent categories dropdown in Add Category Modal
+    function populateParentCategoriesDropdown() {
+        var categories = JSON.parse(localStorage.getItem('categories'));
         
-        categories.forEach(function(category) {
-            parentCategorySelect.append('<option value="' + category.category_id + '">' + category.name + '</option>');
-        });
+        if (categories) {
+            populateDropdown(categories, '#parentCategory'); // Use the specific dropdown ID
+        } else {
+            fetchCategoriesFromServer(function(data) {
+                populateDropdown(data, '#parentCategory');
+            });
+        }
     }
 
-    // Populate categories on page load
-    populateParentCategories();
+    // Function to populate book categories dropdown in Add Book Modal
+    function populateBookCategoriesDropdown() {
+        var categories = JSON.parse(localStorage.getItem('categories'));
+
+        if (categories) {
+            populateDropdown(categories, '#bookCategories'); // Use the specific dropdown ID
+        } else {
+            fetchCategoriesFromServer(function(data) {
+                populateDropdown(data, '#bookCategories');
+            });
+        }
+    }
+
+    // Initialize dropdowns on page load
+    populateParentCategoriesDropdown();
+    populateBookCategoriesDropdown();
+
+    // Optional: Re-populate when Add Category Modal is shown
+    $('#addCategoryModal').on('show.bs.modal', function() {
+        populateParentCategoriesDropdown();
+    });
+
+
 
     // Populate categories when the modal is opened
     $('#addCategoryModal').on('show.bs.modal', function() {
