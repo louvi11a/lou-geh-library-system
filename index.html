@@ -40,40 +40,48 @@
     </footer>
 
     <script>
-        // AJAX login request
-        $(document).ready(function() {
-            $('#loginForm').submit(function(event) {
-                event.preventDefault(); // Prevent default form submission
+    $(document).ready(function() {
+        $('#loginForm').submit(function(event) {
+            event.preventDefault(); // Prevent default form submission
     
-                var username = $('#username').val();
-                var password = $('#password').val();
+            var username = $('#username').val();
+            var password = $('#password').val();
     
-                $.ajax({
-                    type: 'POST',
-                    url: 'controllers/UserController.php',
-                    data: {
-                        action: 'login',
-                        username: username,
-                        password: password
-                    },
-                    success: function(response) {
-                        if (response.trim() === 'reader') {
-                            // Redirect to reader dashboard or perform reader actions
-                            window.location.href = 'views/reader_dashboard.html';
-                        } else if (response.trim() === 'admin') {
-                            // Redirect to admin dashboard or perform admin actions
-                            window.location.href = 'views/admin_dashboard.html';
+            $.ajax({
+                type: 'POST',
+                url: 'controllers/UserController.php',
+                data: {
+                    action: 'login',
+                    username: username,
+                    password: password
+                },
+                success: function(response) {
+                    try {
+                        var data = JSON.parse(response);
+                        if (data.status === 'success') {
+                            if (data.role === 'reader') {
+                                // Redirect to reader dashboard or perform reader actions
+                                window.location.href = 'views/reader_dashboard.html';
+                            } else if (data.role === 'admin') {
+                                // Redirect to admin dashboard or perform admin actions
+                                window.location.href = 'views/admin_dashboard.html';
+                            }
                         } else {
                             // Display error message
-                            $('#loginMessage').html('<p style="color: red;">Invalid username or password.</p>');
+                            $('#loginMessage').html('<p style="color: red;">' + data.message + '</p>');
                         }
-                    },
-                    error: function() {
-                        $('#loginMessage').html('<p style="color: red;">Error logging in. Please try again later.</p>');
+                    } catch (e) {
+                        console.error('Parsing error:', e);
+                        $('#loginMessage').html('<p style="color: red;">Error processing the response.</p>');
                     }
-                });
+                },
+                error: function() {
+                    $('#loginMessage').html('<p style="color: red;">Error logging in. Please try again later.</p>');
+                }
             });
         });
+    });
+    
     </script>
     
 </body>

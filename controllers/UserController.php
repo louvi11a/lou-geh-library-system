@@ -1,4 +1,9 @@
 <?php
+// Ensure session is started only if not already started
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
+
 include_once '../configs/db.php';
 
 class UserController {
@@ -11,6 +16,10 @@ class UserController {
     public function login($username, $password) {
         $sql = "SELECT * FROM readers WHERE username=?";
         $stmt = $this->conn->prepare($sql);
+        if (!$stmt) {
+            return json_encode(['status' => 'error', 'message' => 'SQL prepare error: ' . $this->conn->error]);
+        }
+    
         $stmt->bind_param("s", $username);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -18,28 +27,42 @@ class UserController {
         if ($result->num_rows == 1) {
             $user = $result->fetch_assoc();
             if (password_verify($password, $user['password'])) {
-                if ($user['is_admin'] == 1) {
-                    session_start();
-                    $_SESSION['reader_number'] = $user['reader_number'];
-                    $_SESSION['username'] = $user['username'];
-                    return 'admin'; // Return 'admin' for admin user
-                } else {
-                    session_start();
-                    $_SESSION['reader_number'] = $user['reader_number'];
-                    $_SESSION['username'] = $user['username'];
-                    return 'reader'; // Return 'reader' for regular user
-                }
+                $_SESSION['reader_number'] = $user['reader_number'];
+                $_SESSION['username'] = $user['username'];
+                return json_encode(['status' => 'success', 'role' => $user['is_admin'] == 1 ? 'admin' : 'reader']);
             } else {
-                return 'error'; // Invalid password
+                return json_encode(['status' => 'error', 'message' => 'Invalid password']);
             }
         } else {
-            return 'error'; // Invalid username
+            return json_encode(['status' => 'error', 'message' => 'Invalid username']);
         }
     }
     
     
+    
+    public function getReaderProfile() {
+        if (isset($_SESSION['reader_number'])) {
+            $readerNumber = $_SESSION['reader_number'];
+            $sql = "SELECT * FROM readers WHERE reader_number=?";
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bind_param("i", $readerNumber); // Use "i" for integer
+            $stmt->execute();
+            $result = $stmt->get_result();
+            if ($result->num_rows == 1) {
+                $user = $result->fetch_assoc();
+                echo json_encode($user);
+            } else {
+                echo json_encode(['error' => 'Reader profile not found']);
+            }
+        } else {
+            echo json_encode(['error' => 'Not logged in']);
+        }
+    }
+    
+    
+    
+    
     public function registerReader($username, $password, $family_name, $first_name, $city, $dob) {
-        // Check if username already exists
         $check_sql = "SELECT reader_number FROM readers WHERE username=?";
         $check_stmt = $this->conn->prepare($check_sql);
         $check_stmt->bind_param("s", $username);
@@ -47,90 +70,27 @@ class UserController {
         $check_result = $check_stmt->get_result();
     
         if ($check_result->num_rows > 0) {
-            // Username exists, return an error message
-            return "Reader already exists";
+            return json_encode(['status' => 'error', 'message' => 'Reader already exists']);
         } else {
-            // Username does not exist, create new reader record
             $hashed_password = password_hash($password, PASSWORD_DEFAULT);
             $insert_sql = "INSERT INTO readers (username, password, family_name, first_name, city, dob) VALUES (?, ?, ?, ?, ?, ?)";
             $insert_stmt = $this->conn->prepare($insert_sql);
             $insert_stmt->bind_param("ssssss", $username, $hashed_password, $family_name, $first_name, $city, $dob);
     
             if ($insert_stmt->execute()) {
-                return "Registration successful";
+                return json_encode(['status' => 'success', 'message' => 'Registration successful']);
             } else {
-                return "Error registering reader: " . $insert_stmt->error;
+                return json_encode(['status' => 'error', 'message' => 'Error registering reader: ' . $insert_stmt->error]);
             }
         }
     }
 
-    // Other methods...
 
-    public function editReader($reader_number, $family_name, $first_name, $city, $dob) {
-        $sql = "UPDATE readers SET family_name=?, first_name=?, city=?, dob=? WHERE reader_number=?";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bind_param("ssssi", $family_name, $first_name, $city, $dob, $reader_number);
-        
-        if ($stmt->execute()) {
-            return "Reader information updated successfully";
-        } else {
-            return "Error updating reader information: " . $stmt->error;
-        }
-    }
-
-    public function deleteReader($reader_number) {
-        $sql = "DELETE FROM readers WHERE reader_number=?";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bind_param("i", $reader_number);
-        
-        if ($stmt->execute()) {
-            return "Reader deleted successfully";
-        } else {
-            return "Error deleting reader: " . $stmt->error;
-        }
-    }
-
-    public function searchReaders($keyword) {
-        $sql = "SELECT * FROM readers WHERE family_name LIKE ? OR first_name LIKE ?";
-        $stmt = $this->conn->prepare($sql);
-        $searchKeyword = "%{$keyword}%";
-        $stmt->bind_param("ss", $searchKeyword, $searchKeyword);
-        $stmt->execute();
-        $result = $stmt->get_result();
-
-        if ($result->num_rows > 0) {
-            $readers = [];
-            while ($row = $result->fetch_assoc()) {
-                $readers[] = $row;
-            }
-            return $readers;
-        } else {
-            return [];
-        }
-    }
-    public function getReaderProfile() {
-        session_start();
-        $reader_number = $_SESSION['reader_number'];
-        $sql = "SELECT family_name, first_name, city, dob FROM readers WHERE reader_number=?";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bind_param("i", $reader_number);
-        $stmt->execute();
-        $result = $stmt->get_result();
-    
-        if ($result->num_rows == 1) {
-            echo json_encode($result->fetch_assoc());
-        } else {
-            echo json_encode([]);
-        }
-    }
     
     public function logout() {
-        session_start();
         session_destroy();
         echo json_encode(["message" => "Logged out"]);
     }
-    
-    
 }
 
 // Handle POST requests
@@ -139,8 +99,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     switch ($_POST['action']) {
         case 'login':
-            $response = $controller->login($_POST['username'], $_POST['password']);
-            echo $response;
+            echo $controller->login($_POST['username'], $_POST['password']);
             break;
         case 'getReaderProfile':
             $controller->getReaderProfile();
@@ -148,9 +107,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         case 'logout':
             $controller->logout();
             break;
-
-    
-        
         case 'registerReader':
             echo $controller->registerReader(
                 $_POST['username'],
@@ -177,7 +133,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             echo json_encode($controller->searchReaders($_POST['keyword']));
             break;
         default:
-            echo "Invalid action";
+            echo json_encode(['status' => 'error', 'message' => 'Invalid action']);
             break;
     }
 } elseif ($_SERVER['REQUEST_METHOD'] == 'GET') {

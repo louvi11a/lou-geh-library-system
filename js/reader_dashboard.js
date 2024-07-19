@@ -1,77 +1,77 @@
 $(document).ready(function() {
-     // Function to populate autocomplete with search results
-     function populateAutocomplete(books) {
-        $('#searchQuery').autocomplete({
-            source: books.map(function(book) {
-                return {
-                    label: book.title + ' by ' + book.author,
-                    value: book.isbn,
-                    title: book.title // Add title to the object
-                };
-            }),
-            select: function(event, ui) {
-                var selectedIsbn = ui.item.value;
-                var selectedTitle = ui.item.title; // Get the selected title
-                
-                // Set the search input to the selected title
-                $('#searchQuery').val(selectedTitle);
-                
-                // AJAX call to fetch book details and check availability
-                $.ajax({
-                    type: 'POST',
-                    url: '../controllers/BookController.php',
-                    data: { action: 'getBookDetails', isbn: selectedIsbn },
-                    success: function(response) {
-                        var book = JSON.parse(response);
-                        // Populate modal with book details
-                        $('#modalTitle').text(book.title);
-                        $('#modalAuthor').text(book.author);
-                        $('#modalPublisher').text(book.publisher);
-                        $('#modalPublicationYear').text(book.publication_year);
-                        $('#modalPages').text(book.number_of_pages);
-                        // Display the modal
-                        $('#bookModal').modal('show');
-                    },
-                    error: function(xhr, status, error) {
-                        console.error("AJAX error:", error);
-                    }
-                });
+    // Function to get the reader number
+    function getReaderNumber() {
+        console.log("Current window.readerNumber:", window.readerNumber);
+        if (typeof window.readerNumber === 'undefined' || window.readerNumber === null) {
+            console.error("Reader number is missing.");
+            return null;
+        }
+        return window.readerNumber;
+    }
 
-                return false; // Prevent default action (replacing the input value)
+    // Function to fetch and display borrowed books
+    function fetchBorrowedBooks() {
+        var readerNumber = getReaderNumber();
+        if (!readerNumber) {
+            console.error("Cannot fetch borrowed books without reader number.");
+            return;
+        }
+
+        $.ajax({
+            type: 'POST',
+            url: '../controllers/BorrowController.php',
+            data: { action: 'getBorrowedBooks', reader_number: readerNumber },
+            dataType: 'json', // Expect JSON response
+            success: function(response) {
+                console.log("Response:", response);
+                try {
+                    if (Array.isArray(response)) {
+                        response.forEach(function(book) {
+                            $('#borrowedBooksList').append('<li>' + book.title + ' by ' + book.author + ' (ISBN: ' + book.isbn + ', Copy No: ' + book.copy_number + ', Return Date: ' + book.return_date + ')</li>');
+                        });
+                    } else {
+                        console.error("Unexpected data format:", response);
+                    }
+                } catch (e) {
+                    console.error("Parsing error:", e);
+                    console.error("Response:", response);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error("AJAX error:", error);
             }
         });
-    }
         
+    }
 
-
-    
     // Fetch and display reader profile information
     $.ajax({
         type: 'POST',
         url: '../controllers/UserController.php',
         data: { action: 'getReaderProfile' },
         success: function(response) {
-            var profile = JSON.parse(response);
-            $('#readerName').text(profile.first_name);
-            $('#familyName').text(profile.family_name);
-            $('#firstName').text(profile.first_name);
-            $('#city').text(profile.city);
-            $('#dob').text(profile.dob);
-        }
-    });
-
-    // Fetch and display borrowed books
-    $.ajax({
-        type: 'POST',
-        url: '../controllers/BorrowController.php',
-        data: { action: 'getBorrowedBooks' },
-        success: function(response) {
-            console.log("Response:", response);
+            console.log("Profile Response:", response);
+            if (!response) {
+                console.error("Received empty response");
+                return;
+            }
             try {
-                var borrowedBooks = JSON.parse(response);
-                borrowedBooks.forEach(function(book) {
-                    $('#borrowedBooksList').append('<li>' + book.title + ' by ' + book.author + ' (ISBN: ' + book.isbn + ', Copy No: ' + book.copy_number + ', Return Date: ' + book.return_date + ')</li>');
-                });
+                var profile = JSON.parse(response);
+                console.log("Parsed Profile:", profile);
+                if (profile.error) {
+                    console.error("Error:", profile.error);
+                } else {
+                    $('#readerName').text(profile.first_name);
+                    $('#familyName').text(profile.family_name);
+                    $('#firstName').text(profile.first_name);
+                    $('#city').text(profile.city);
+                    $('#dob').text(profile.dob);
+                    window.readerNumber = profile.reader_number;
+                    console.log("Reader Number Set:", window.readerNumber);
+
+                    // Call fetchBorrowedBooks after readerNumber is set
+                    fetchBorrowedBooks();
+                }
             } catch (e) {
                 console.error("Parsing error:", e);
                 console.error("Response:", response);
@@ -81,30 +81,58 @@ $(document).ready(function() {
             console.error("AJAX error:", error);
         }
     });
+// Function to populate autocomplete with search results
+function populateAutocomplete(books) {
+    $('#searchQuery').autocomplete({
+        source: books.map(function(book) {
+            return {
+                label: book.title + ' by ' + book.author,
+                value: book.isbn,
+                title: book.title // Add title to the object
+            };
+        }),
+        select: function(event, ui) {
+            var selectedIsbn = ui.item.value;
+            var selectedTitle = ui.item.title;
+            
+            $('#searchQuery').val(selectedTitle);
+            
+            $.ajax({
+                type: 'POST',
+                url: '../controllers/BookController.php',
+                data: { action: 'getBookDetails', isbn: selectedIsbn },
+                success: function(response) {
+                    var book = JSON.parse(response);
+                    showBookDetails(book); // Use the reusable function to show book details
+                },
+                error: function(xhr, status, error) {
+                    console.error("AJAX error:", error);
+                }
+            });
 
-    // Fetch and display borrow history
-    $.ajax({
-        type: 'POST',
-        url: '../controllers/BorrowController.php',
-        data: { action: 'getBorrowHistory' },
-        success: function(response) {
-            console.log("Response:", response);
-            try {
-                var borrowHistory = JSON.parse(response);
-                borrowHistory.forEach(function(book) {
-                    $('#borrowHistoryList').append('<li>' + book.title + ' by ' + book.author + ' (ISBN: ' + book.isbn + ', Borrow Date: ' + book.borrow_date + ', Return Date: ' + book.return_date + ')</li>');
-                });
-            } catch (e) {
-                console.error("Parsing error:", e);
-                console.error("Response:", response);
-            }
-        },
-        error: function(xhr, status, error) {
-            console.error("AJAX error:", error);
+            return false;
         }
     });
+}
 
-    // Handle search input keyup for autocomplete
+// Function to display book details in the modal
+function showBookDetails(book) {
+    $('#modalTitle').text(book.title);
+    $('#modalAuthor').text(book.author);
+    $('#modalPublisher').text(book.publisher);
+    $('#modalPublicationYear').text(book.publication_year);
+    $('#modalPages').text(book.number_of_pages);
+    if (book.isAvailable) {
+        $('#modalAvailability').text('Available for borrowing');
+        $('#borrowButton').show().data('isbn', book.isbn);
+    } else {
+        $('#modalAvailability').text('Currently borrowed');
+        $('#borrowButton').hide();
+    }
+    $('#bookModal').modal('show');
+}
+
+
     $('#searchQuery').keyup(function() {
         var query = $(this).val().trim();
         if (query !== '') {
@@ -130,20 +158,16 @@ $(document).ready(function() {
         }
     });
 
-    // Handle book selection from dropdown
     $('#searchResultsDropdown').change(function() {
         var selectedIsbn = $(this).val();
-        // AJAX call to fetch book details and check availability
         $.ajax({
             type: 'POST',
             url: '../controllers/BookController.php',
             data: { action: 'getBookDetails', isbn: selectedIsbn },
             success: function(response) {
                 var book = JSON.parse(response);
-                // Populate modal with book details
                 $('#modalTitle').text(book.title);
                 $('#modalAuthor').text(book.author);
-                // Check if book is available for borrowing
                 if (book.available) {
                     $('#modalAvailability').text('Available for borrowing');
                     $('#borrowButton').show().data('isbn', selectedIsbn);
@@ -151,18 +175,36 @@ $(document).ready(function() {
                     $('#modalAvailability').text('Currently borrowed');
                     $('#borrowButton').hide();
                 }
-                // Display the modal
                 $('#bookModal').modal('show');
             }
         });
     });
 
-    // Handle borrow button click
     $('#borrowButton').click(function() {
         var isbn = $(this).data('isbn');
-        // Implement borrowing logic here
-        // You'll need another AJAX call or form submission to actually borrow the book
-        alert('Borrowing book with ISBN: ' + isbn);
+        var readerNumber = getReaderNumber();
+
+        $.ajax({
+            type: 'POST',
+            url: '../controllers/BorrowController.php',
+            data: {
+                action: 'borrowBook',
+                reader_number: readerNumber,
+                isbn: isbn
+            },
+            success: function(response) {
+                var result = JSON.parse(response);
+                if (result.status === 'success') {
+                    alert(result.message);
+                    $('#bookModal').modal('hide');
+                } else {
+                    alert(result.message);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error("AJAX error:", error);
+            }
+        });
     });
 
     // Logout
