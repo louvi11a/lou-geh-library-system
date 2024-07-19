@@ -20,6 +20,8 @@
             <button id="btnAddCategory">Add Category</button>
             <button id="btnAddMember">Add Member</button>
             <button id="btnViewReaders">View Readers</button>
+            <button id="btnViewBorrowedBooks">View Borrowed Books</button>
+
             <!-- Add more buttons as needed -->
         </section>
         
@@ -120,7 +122,19 @@
             </div>
         </div>
 
-        <!-- Add modals or form sections for other actions (add publisher, view readers) -->
+<!-- Modal for displaying borrowed books -->
+<div id="viewBorrowedBooksModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>Borrowed Books History</h2>
+        <div id="borrowedBooksTableContainer">
+            <!-- Table will be dynamically inserted here -->
+        </div>
+        <div id="borrowedBooksTableMessage">
+            <!-- Message for no borrowed books found will be inserted here -->
+        </div>
+    </div>
+</div>
     </main>
     <footer>
         <p>&copy; 2024 Lou Geh Library System. All rights reserved.</p>

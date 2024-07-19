@@ -44,6 +44,52 @@ $(document).ready(function() {
         });
     }
 
+
+    // Function to display borrowed books
+    function displayBorrowedBooks() {
+        $.ajax({
+            type: 'POST',
+            url: '../controllers/AdminController.php',
+            data: { action: 'viewBorrowedBooks' },
+            dataType: 'json',
+            success: function(response) {
+                if (response.length > 0) {
+                    var table = '<h1>Borrowed Books History</h1><table><tr><th>Borrow ID</th><th>Book Title</th><th>Reader Name</th><th>Borrow Date</th><th>Return Date</th></tr>';
+                    for (var i = 0; i < response.length; i++) {
+                        table += '<tr>';
+                        table += '<td>' + response[i].borrow_id + '</td>';
+                        table += '<td>' + response[i].book_title + '</td>';
+                        table += '<td>' + response[i].reader_name + '</td>';
+                        table += '<td>' + response[i].borrow_date + '</td>';
+                        table += '<td>' + (response[i].return_date ? response[i].return_date : 'Not Returned') + '</td>';
+                        table += '</tr>';
+                    }
+                    table += '</table>';
+                    table += '<button id="btnCloseModal">Close</button>';
+
+                    $('#viewBorrowedBooksModal .modal-content').html(table);
+                    $('#viewBorrowedBooksModal').css('display', 'block');
+
+                    // Close modal when close button is clicked
+                    $('#btnCloseModal').click(function() {
+                        $('#viewBorrowedBooksModal').css('display', 'none');
+                    });
+                } else {
+                    $('#viewBorrowedBooksModal .modal-content').html('<p>No borrowed books found.</p>');
+                    $('#viewBorrowedBooksModal').css('display', 'block');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('AJAX Error:', status, error);
+                console.error('Response Text:', xhr.responseText);
+                alert('Error fetching borrowed books. Please try again later.');
+            }
+            
+            
+        });
+    }
+
+
     // Function to populate parent categories dropdown in Add Category Modal
     function populateParentCategoriesDropdown() {
         var categories = JSON.parse(localStorage.getItem('categories'));
@@ -102,6 +148,11 @@ $(document).ready(function() {
     $('#btnAddPublisher').click(function() {
         $('#addPublisherModal').css('display', 'block');
     });
+
+        // Trigger display of borrowed books when button is clicked
+        $('#btnViewBorrowedBooks').click(function() {
+            displayBorrowedBooks();
+        });
 
     // Open modal for Add Category button
     $('#btnAddCategory').click(function() {

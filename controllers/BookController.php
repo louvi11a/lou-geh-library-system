@@ -1,5 +1,8 @@
 <?php
 include_once '../configs/db.php';
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 
 class BookController {
     private $conn;
@@ -117,7 +120,9 @@ class BookController {
     }
 
     public function getBookDetails($isbn) {
-        $sql = "SELECT b.title, b.author, p.name AS publisher, b.publication_year, b.number_of_pages
+        $sql = "SELECT b.isbn, b.title, b.author, p.name AS publisher, b.publication_year, b.number_of_pages,
+                       (SELECT COUNT(*) FROM borrows WHERE isbn = b.isbn AND return_date IS NULL) AS borrowed_count,
+                       (SELECT COUNT(*) FROM copies WHERE isbn = b.isbn) AS total_copies
                 FROM books b
                 LEFT JOIN publishers p ON b.publisher_id = p.publisher_id
                 WHERE b.isbn = ?";
@@ -129,11 +134,14 @@ class BookController {
             $book = $result->fetch_assoc();
             $stmt->close();
     
+            $book['isAvailable'] = $book['borrowed_count'] < $book['total_copies'];
+    
             return json_encode($book);
         } else {
             return json_encode(["error" => "Failed to prepare statement"]);
         }
     }
+    
     
     public function getAllBooks() {
         $sql = "SELECT * FROM books";

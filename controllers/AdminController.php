@@ -86,7 +86,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         case 'viewReaders':
             echo $controller->viewReaders();
             break;
-        // Add cases for deleteBook, editPublisher, etc.
+// Add this case to your switch statement in AdminController.php
+case 'viewBorrowedBooks':
+    $sql = "SELECT b.borrow_id, bk.title AS book_title, CONCAT(r.first_name, ' ', r.family_name) AS reader_name, b.borrow_date, b.return_date
+            FROM borrows b
+            JOIN books bk ON b.isbn = bk.isbn
+            JOIN readers r ON b.reader_number = r.reader_number";
+    $result = $conn->query($sql);
+    
+    if ($result->num_rows > 0) {
+        $borrowedBooks = array();
+        while ($row = $result->fetch_assoc()) {
+            $borrowedBooks[] = $row;
+        }
+        echo json_encode($borrowedBooks);
+    } else {
+        echo json_encode(array());
+    }
+    break;
+
         default:
             echo "Invalid action";
             break;
