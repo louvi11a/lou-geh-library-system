@@ -116,6 +116,25 @@ class BookController {
         }
     }
 
+    public function getBookDetails($isbn) {
+        $sql = "SELECT b.title, b.author, p.name AS publisher, b.publication_year, b.number_of_pages
+                FROM books b
+                LEFT JOIN publishers p ON b.publisher_id = p.publisher_id
+                WHERE b.isbn = ?";
+        
+        if ($stmt = $this->conn->prepare($sql)) {
+            $stmt->bind_param("s", $isbn);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $book = $result->fetch_assoc();
+            $stmt->close();
+    
+            return json_encode($book);
+        } else {
+            return json_encode(["error" => "Failed to prepare statement"]);
+        }
+    }
+    
     public function getAllBooks() {
         $sql = "SELECT * FROM books";
         $result = $this->conn->query($sql);
@@ -151,7 +170,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $category_ids
             );
             break;
-
         case 'editBook':
             echo $controller->editBook(
                 $_POST['isbn'],
@@ -165,10 +183,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         case 'deleteBook':
             echo $controller->deleteBook($_POST['isbn']);
             break;
+        case 'getBookDetails':
+            echo $controller->getBookDetails($_POST['isbn']);
+            break;
         default:
             echo json_encode(['status' => 'error', 'message' => 'Invalid action']);
             break;
     }
+    
 } elseif ($_SERVER['REQUEST_METHOD'] == 'GET') {
     // Handle GET requests if necessary (e.g., for getAllBooks action)
 }

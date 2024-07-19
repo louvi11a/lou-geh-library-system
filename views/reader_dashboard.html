@@ -4,11 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reader Dashboard - Lou Geh Library System</title>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
     <link rel="stylesheet" href="../css/style.css">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="../js/reader_dashboard.js"></script>
     <!-- Bootstrap CSS for modal -->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 </head>
 <body>
     <header>
@@ -31,8 +34,8 @@
         <section id="searchBooksSection">
             <h2>Search Books</h2>
             <input type="text" id="searchQuery" placeholder="Search by title, author, ISBN, or category">
-            <button id="searchButton">Search</button>
-            <select id="searchResultsDropdown"></select>
+            <!-- <button id="searchButton">Search</button>
+            <select id="searchResultsDropdown"></select> -->
         </section>
         
         <section id="borrowHistorySection">
@@ -53,8 +56,12 @@
                 </div>
                 <div class="modal-body">
                     <p><strong>Author:</strong> <span id="modalAuthor">Author Name</span></p>
+                    <p><strong>Publisher:</strong> <span id="modalPublisher">Publisher Name</span></p>
+                    <p><strong>Publication Year:</strong> <span id="modalPublicationYear">Year</span></p>
+                    <p><strong>Number of Pages:</strong> <span id="modalPages">Pages</span></p>
                     <p><strong>Availability:</strong> <span id="modalAvailability">Availability Status</span></p>
                 </div>
+                
                 <div class="modal-footer">
                     <button type="button" class="btn btn-primary" id="borrowButton" style="display: none;">Borrow</button>
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>

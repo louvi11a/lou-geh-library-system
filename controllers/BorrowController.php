@@ -8,51 +8,72 @@ class BorrowController {
         $this->conn = $conn;
     }
 
-    public function getBorrowedBooks($readerNumber) {
-        $query = "
-            SELECT b.title, b.author, b.isbn, bc.copy_number, br.return_date
-            FROM borrows br
-            JOIN books b ON br.isbn = b.isbn
-            JOIN copies bc ON br.copy_number = bc.copy_number
-            WHERE br.reader_number = ?
+    public function checkAvailability($isbn) {
+        $sql = "
+            SELECT COUNT(*) AS available_copies 
+            FROM copies c 
+            LEFT JOIN borrows b ON c.copy_number = b.copy_number AND b.return_date IS NULL 
+            WHERE c.isbn = ? AND b.borrow_id IS NULL
         ";
-
-        if ($stmt = $this->conn->prepare($query)) {
-            $stmt->bind_param("i", $readerNumber);
+        if ($stmt = $this->conn->prepare($sql)) {
+            $stmt->bind_param("s", $isbn);
             $stmt->execute();
-            $result = $stmt->get_result();
-            $books = $result->fetch_all(MYSQLI_ASSOC);
+            $stmt->bind_result($available_copies);
+            $stmt->fetch();
             $stmt->close();
 
-            return json_encode($books);
+            return $available_copies > 0;
         } else {
-            return json_encode(["error" => "Failed to prepare statement"]);
+            return false;
         }
     }
 
-    public function getBorrowHistory($readerNumber) {
-        $sql = "
-            SELECT b.title, b.author, b.isbn, br.borrow_date, br.return_date
-            FROM borrows br
-            JOIN books b ON br.isbn = b.isbn
-            WHERE br.reader_number = ?
-        ";
-        
-        if ($stmt = $this->conn->prepare($sql)) {
-            $stmt->bind_param("i", $readerNumber);
-            $stmt->execute();
-            $result = $stmt->get_result();
-            $borrowHistory = $result->fetch_all(MYSQLI_ASSOC);
-            $stmt->close();
+    public function borrowBook($reader_number, $isbn) {
+        $availability = $this->checkAvailability($isbn);
 
-            return json_encode($borrowHistory);
+        if ($availability) {
+            $sql = "
+                INSERT INTO borrows (reader_number, copy_number, isbn, borrow_date) 
+                SELECT ?, copy_number, ?, CURDATE() 
+                FROM copies 
+                WHERE isbn = ? AND copy_number NOT IN (SELECT copy_number FROM borrows WHERE return_date IS NULL) 
+                LIMIT 1
+            ";
+
+            if ($stmt = $this->conn->prepare($sql)) {
+                $stmt->bind_param("iss", $reader_number, $isbn, $isbn);
+                if ($stmt->execute()) {
+                    $stmt->close();
+                    return json_encode(['status' => 'success', 'message' => 'Book borrowed successfully.']);
+                } else {
+                    $stmt->close();
+                    return json_encode(['status' => 'error', 'message' => 'Failed to borrow book.']);
+                }
+            } else {
+                return json_encode(['status' => 'error', 'message' => 'Failed to prepare statement.']);
+            }
         } else {
-            return json_encode(["error" => "Failed to prepare statement"]);
+            return json_encode(['status' => 'error', 'message' => 'No available copies to borrow.']);
+        }
+    }
+
+    public function returnBook($borrow_id) {
+        $sql = "UPDATE borrows SET return_date = CURDATE() WHERE borrow_id = ?";
+        if ($stmt = $this->conn->prepare($sql)) {
+            $stmt->bind_param("i", $borrow_id);
+            if ($stmt->execute()) {
+                $stmt->close();
+                return json_encode(['status' => 'success', 'message' => 'Book returned successfully.']);
+            } else {
+                $stmt->close();
+                return json_encode(['status' => 'error', 'message' => 'Failed to return book.']);
+            }
+        } else {
+            return json_encode(['status' => 'error', 'message' => 'Failed to prepare statement.']);
         }
     }
 }
 
-// Handle POST requests
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     ini_set('display_errors', 1);
     ini_set('display_startup_errors', 1);
@@ -60,20 +81,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     $controller = new BorrowController($conn);
 
-    session_start();
-    $readerNumber = $_SESSION['reader_number'];
-
     switch ($_POST['action']) {
-        case 'getBorrowedBooks':
-            echo $controller->getBorrowedBooks($readerNumber);
+        case 'borrowBook':
+            echo $controller->borrowBook($_POST['reader_number'], $_POST['isbn']);
             break;
-        case 'getBorrowHistory':
-            echo $controller->getBorrowHistory($readerNumber);
+        case 'returnBook':
+            echo $controller->returnBook($_POST['borrow_id']);
             break;
         default:
-            header('Content-Type: application/json');
-            echo json_encode(["error" => "Invalid action"]);
+            echo json_encode(['status' => 'error', 'message' => 'Invalid action']);
             break;
     }
 }
-?>

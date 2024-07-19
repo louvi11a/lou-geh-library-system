@@ -1,14 +1,50 @@
 $(document).ready(function() {
-    // Function to populate dropdown with search results
-    function populateDropdown(books) {
-        var dropdown = $('#searchResultsDropdown');
-        dropdown.empty();
-        dropdown.append($('<option>').text('Select a book...').attr('value', ''));
-        books.forEach(function(book) {
-            dropdown.append($('<option>').text(book.title + ' by ' + book.author).attr('value', book.isbn));
+     // Function to populate autocomplete with search results
+     function populateAutocomplete(books) {
+        $('#searchQuery').autocomplete({
+            source: books.map(function(book) {
+                return {
+                    label: book.title + ' by ' + book.author,
+                    value: book.isbn,
+                    title: book.title // Add title to the object
+                };
+            }),
+            select: function(event, ui) {
+                var selectedIsbn = ui.item.value;
+                var selectedTitle = ui.item.title; // Get the selected title
+                
+                // Set the search input to the selected title
+                $('#searchQuery').val(selectedTitle);
+                
+                // AJAX call to fetch book details and check availability
+                $.ajax({
+                    type: 'POST',
+                    url: '../controllers/BookController.php',
+                    data: { action: 'getBookDetails', isbn: selectedIsbn },
+                    success: function(response) {
+                        var book = JSON.parse(response);
+                        // Populate modal with book details
+                        $('#modalTitle').text(book.title);
+                        $('#modalAuthor').text(book.author);
+                        $('#modalPublisher').text(book.publisher);
+                        $('#modalPublicationYear').text(book.publication_year);
+                        $('#modalPages').text(book.number_of_pages);
+                        // Display the modal
+                        $('#bookModal').modal('show');
+                    },
+                    error: function(xhr, status, error) {
+                        console.error("AJAX error:", error);
+                    }
+                });
+
+                return false; // Prevent default action (replacing the input value)
+            }
         });
     }
+        
 
+
+    
     // Fetch and display reader profile information
     $.ajax({
         type: 'POST',
@@ -68,9 +104,9 @@ $(document).ready(function() {
         }
     });
 
-    // Handle search button click
-    $('#searchButton').click(function() {
-        var query = $('#searchQuery').val().trim();
+    // Handle search input keyup for autocomplete
+    $('#searchQuery').keyup(function() {
+        var query = $(this).val().trim();
         if (query !== '') {
             $.ajax({
                 type: 'POST',
@@ -79,12 +115,9 @@ $(document).ready(function() {
                 success: function(response) {
                     try {
                         var books = JSON.parse(response);
-                        // Clear previous results
-                        $('#searchResultsDropdown').empty();
-                        // Populate dropdown with search results
-                        books.forEach(function(book) {
-                            $('#searchResultsDropdown').append('<option value="' + book.isbn + '">' + book.title + ' by ' + book.author + '</option>');
-                        });
+                        if (books.length > 0) {
+                            populateAutocomplete(books);
+                        }
                     } catch (e) {
                         console.error("Parsing error:", e);
                         console.error("Response:", response);
@@ -94,8 +127,6 @@ $(document).ready(function() {
                     console.error("AJAX error:", error);
                 }
             });
-        } else {
-            alert("Please enter a search query.");
         }
     });
 
