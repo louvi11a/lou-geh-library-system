@@ -1,6 +1,17 @@
 # Lou Geh Library System
 
 ## Setup Guide
+Default Credentials
+For testing purposes, you can use the following credentials:
+
+Admin Account:
+
+Username: usera
+Password: pass
+Reader Account:
+
+Username: userb
+Password: pass
 
 ### Prerequisites
 
@@ -25,7 +36,7 @@
 3. Set up the database:
 
     - Open MySQL command line or any MySQL client
-    - Run the SQL script located in `database/schema.sql`
+    - Run the SQL script located in 'configs\Dump20240720.sql'
 
 4. Configure the database connection:
 
