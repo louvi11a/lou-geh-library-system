@@ -13,7 +13,7 @@
 1. Clone the repository:
 
     ```bash
-    git clone https://github.com/yourusername/lou-geh-library-system.git
+    git clone https://github.com/louvi11a/lou-geh-library-system.git
     ```
 
 2. Navigate to the project directory:
@@ -45,10 +45,6 @@
 
     Open your web browser and go to `http://localhost:8000`
 
-## Documentation
-
-- ERD: `documentation/ERD.png`
-- DFD: `documentation/DFD.png`
 
 ## License
 
