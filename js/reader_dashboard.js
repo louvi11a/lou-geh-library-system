@@ -68,7 +68,7 @@ function returnBook(borrowId) {
             console.log("Return book response:", response); // Log response for debugging
             if (response.status === 'success') {
                 alert('Book returned successfully.');
-                fetchBorrowedBooks(); // Refresh the list of borrowed books
+                window.location.reload(); // Reload the page after successful return
             } else {
                 alert('Error: ' + response.message);
             }
@@ -168,9 +168,22 @@ function showBookDetails(book) {
     $('#modalPublisher').text(book.publisher);
     $('#modalPublicationYear').text(book.publication_year);
     $('#modalPages').text(book.number_of_pages);
-
     $('#modalISBN').text(book.isbn); // Ensure ISBN is set in the modal
 
+    // Fetch the number of copies
+    $.ajax({
+        url: 'path/to/your/controller/getCopiesCount.php', // Adjust path to your endpoint
+        type: 'GET',
+        data: { isbn: book.isbn },
+        success: function(response) {
+            var data = JSON.parse(response);
+            $('#bookCopiesCount').text(data.copy_count);
+        },
+        error: function() {
+            $('#bookCopiesCount').text('Error fetching data');
+        }
+    });
+    
     if (book.isAvailable) {
         $('#modalAvailability').text('Available for borrowing');
         $('#borrowButton').show().data('isbn', book.isbn);

@@ -5,37 +5,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lou Geh Library System</title>
     <link rel="stylesheet" href="../css/style.css"> <!-- Link your CSS file here -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"> <!-- Bootstrap CSS -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script> <!-- Bootstrap JS -->
     <script src="../js/app.js"></script> <!-- Your JavaScript file -->
 </head>
 <body>
-    <header>
+    <header class="text-center py-3 bg-light">
         <h1>Welcome to Lou Geh Library System</h1>
     </header>
-    <main>
-        <section class="login-section">
+    <main class="d-flex justify-content-center align-items-center vh-100">
+        <section class="login-section text-center p-4 border rounded bg-white shadow">
             <h2>Login</h2>
-            <form id="loginForm" action="../controllers/UserController.php" method="post">
-                <input type="text" id="username" name="username" placeholder="Username" required>
-                <input type="password" id="password" name="password" placeholder="Password" required>
-                <button type="submit">Login</button>
+            <form id="loginForm" action="../controllers/UserController.php" method="post" class="mt-3">
+                <div class="form-group">
+                    <input type="text" id="username" name="username" class="form-control" placeholder="Username" required>
+                </div>
+                <div class="form-group">
+                    <input type="password" id="password" name="password" class="form-control" placeholder="Password" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Login</button>
             </form>
-            
-            <p>New here? <a href="views/register.html">Register</a></p>
-            <div id="loginMessage"></div> <!-- Display login status/messages here -->
-        </section>
-        
-        <!-- Additional sections/navigation links -->
-        <section class="navigation-section">
-            <h2>Explore Lou Geh Library</h2>
-            <ul>
-                <li><a href="books.html">Search Books</a></li>
-                <li><a href="about.html">About the Library</a></li>
-                <li><a href="contact.html">Contact Us</a></li>
-            </ul>
+            <p class="mt-3">New here? <a href="views/register.html">Register</a></p>
+            <div id="loginMessage" class="mt-3"></div> <!-- Display login status/messages here -->
         </section>
     </main>
-    <footer>
+    <footer class="text-center py-3 bg-light">
         <p>&copy; 2024 Lou Geh Library System. All rights reserved.</p>
     </footer>
 
@@ -49,7 +44,7 @@
     
             $.ajax({
                 type: 'POST',
-                url: 'controllers/UserController.php',
+                url: '../controllers/UserController.php',
                 data: {
                     action: 'login',
                     username: username,
@@ -68,21 +63,19 @@
                             }
                         } else {
                             // Display error message
-                            $('#loginMessage').html('<p style="color: red;">' + data.message + '</p>');
+                            $('#loginMessage').html('<div class="alert alert-danger">' + data.message + '</div>');
                         }
                     } catch (e) {
                         console.error('Parsing error:', e);
-                        $('#loginMessage').html('<p style="color: red;">Error processing the response.</p>');
+                        $('#loginMessage').html('<div class="alert alert-danger">Error processing the response.</div>');
                     }
                 },
                 error: function() {
-                    $('#loginMessage').html('<p style="color: red;">Error logging in. Please try again later.</p>');
+                    $('#loginMessage').html('<div class="alert alert-danger">Error logging in. Please try again later.</div>');
                 }
             });
         });
     });
-    
     </script>
-    
 </body>
 </html>

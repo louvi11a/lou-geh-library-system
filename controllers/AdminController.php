@@ -29,7 +29,7 @@ class AdminController {
     }
 
 
-    public function addMember($username, $password, $family_name, $first_name, $city, $dob) {
+    public function addUser($username, $password, $family_name, $first_name, $city, $dob) {
         $hashed_password = password_hash($password, PASSWORD_DEFAULT);
         $insert_sql = "INSERT INTO readers (username, password, family_name, first_name, city, dob) VALUES (?, ?, ?, ?, ?, ?)";
         $stmt = $this->conn->prepare($insert_sql);
@@ -59,7 +59,22 @@ class AdminController {
         }
     }
 
-    // Add more methods for other admin actions (e.g., deleteBook, editPublisher, etc.)
+// AdminController.php
+
+public function getCopiesCount($isbn) {
+    // Database connection (adjust according to your setup)
+    $pdo = new PDO('mysql:host=localhost;dbname=library', 'username', 'password');
+    
+    // Prepare and execute SQL query
+    $stmt = $pdo->prepare('SELECT COUNT(*) AS copy_count FROM copies WHERE isbn = :isbn');
+    $stmt->execute(['isbn' => $isbn]);
+    
+    // Fetch the result
+    $result = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    // Return JSON response
+    echo json_encode(['copy_count' => $result['copy_count']]);
+}
 }
 
 // Handle POST requests
@@ -73,8 +88,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $_POST['location']
             );
             break;
-        case 'addMember':
-            echo $controller->addMember(
+        case 'addUser':
+            echo $controller->addUser(
                 $_POST['username'],
                 $_POST['password'],
                 $_POST['family_name'],

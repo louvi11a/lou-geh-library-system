@@ -20,6 +20,27 @@ label, input {
     margin: 5px 0;
 }
 
+/* Align header elements */
+header {
+    padding: 10px;
+    background-color: #b6daeb; /* Optional: Adds a light background to the header */
+}
+
+/* Button styles */
+#logoutButton {
+    background-color: transparent;
+    color: #000; /* Default text color */
+    border: 1px solid #000; /* Optional: Adds a border */
+    transition: background-color 0.3s, color 0.3s; /* Smooth transition effect */
+}
+
+#logoutButton:hover {
+    background-color: red;
+    color: #fff; /* Text color on hover */
+    border: 1px solid red; /* Optional: Change border color on hover */
+}
+
+
 .close:hover {
     color: #000; /* Change color on hover */
 }

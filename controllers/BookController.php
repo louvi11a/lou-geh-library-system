@@ -14,10 +14,8 @@ class BookController {
     public function writeToConsole($message) {
         echo "<script>console.error('PHP Error: " . addslashes($message) . "');</script>";
     }
-
     public function addBook($isbn, $title, $author, $publication_year, $number_of_pages, $publisher_id, $category_ids) {
-        $this->writeToConsole("Adding book with ISBN: $isbn, Title: $title, Author: $author");
-
+        // Check if the book already exists
         $check_sql = "SELECT isbn FROM books WHERE isbn = ?";
         $stmt_check = $this->conn->prepare($check_sql);
         $stmt_check->bind_param("s", $isbn);
@@ -29,33 +27,50 @@ class BookController {
             return "Failed to add book. ISBN already exists.";
         }
         $stmt_check->close();
-
-        $this->writeToConsole("ISBN $isbn is unique. Proceeding to insert.");
-
+    
+        // Validate and check if the publisher_id exists
+        if (empty($publisher_id) || !is_numeric($publisher_id)) {
+            $this->writeToConsole("Invalid publisher ID: $publisher_id");
+            return "Error adding book: Invalid publisher ID.";
+        }
+    
+        $publisher_check_sql = "SELECT publisher_id FROM publishers WHERE publisher_id = ?";
+        $stmt_publisher_check = $this->conn->prepare($publisher_check_sql);
+        $stmt_publisher_check->bind_param("i", $publisher_id);
+        $stmt_publisher_check->execute();
+        $stmt_publisher_check->store_result();
+        if ($stmt_publisher_check->num_rows == 0) {
+            $stmt_publisher_check->close();
+            $this->writeToConsole("Publisher ID $publisher_id does not exist.");
+            return "Failed to add book. Publisher does not exist.";
+        }
+        $stmt_publisher_check->close();
+    
+        // Insert the book
         $insert_sql = "INSERT INTO books (isbn, title, author, publication_year, number_of_pages, publisher_id) VALUES (?, ?, ?, ?, ?, ?)";
         $stmt = $this->conn->prepare($insert_sql);
         $stmt->bind_param("ssssii", $isbn, $title, $author, $publication_year, $number_of_pages, $publisher_id);
-
+    
         if ($stmt->execute()) {
             $this->writeToConsole("Book inserted successfully with ISBN: $isbn");
-
+    
             foreach ($category_ids as $category_id) {
                 $check_category_sql = "SELECT category_id FROM categories WHERE category_id = ?";
                 $stmt_category_check = $this->conn->prepare($check_category_sql);
                 $stmt_category_check->bind_param("i", $category_id);
                 $stmt_category_check->execute();
                 $stmt_category_check->store_result();
-
+    
                 if ($stmt_category_check->num_rows == 0) {
                     $this->writeToConsole("Category with ID $category_id does not exist.");
                     continue;
                 }
                 $stmt_category_check->close();
-
+    
                 $insert_category_sql = "INSERT INTO book_categories (isbn, category_id) VALUES (?, ?)";
                 $stmt_category = $this->conn->prepare($insert_category_sql);
                 $stmt_category->bind_param("si", $isbn, $category_id);
-
+    
                 if ($stmt_category->execute()) {
                     $this->writeToConsole("Inserted category ID: $category_id for book ISBN: $isbn");
                 } else {
@@ -63,38 +78,14 @@ class BookController {
                 }
                 $stmt_category->close();
             }
-
+    
             return "Book added successfully.";
         } else {
             $this->writeToConsole("Error adding book: " . $stmt->error);
             return "Error adding book: " . $stmt->error;
         }
     }
-
-
-    public function editBook($isbn, $title, $author, $publication_year, $number_of_pages, $publisher_id) {
-        $sql = "UPDATE books SET title=?, author=?, publication_year=?, number_of_pages=?, publisher_id=? WHERE isbn=?";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bind_param("sssiii", $title, $author, $publication_year, $number_of_pages, $publisher_id, $isbn);
-
-        if ($stmt->execute()) {
-            return json_encode(['status' => 'success', 'message' => 'Book updated successfully.']);
-        } else {
-            return json_encode(['status' => 'error', 'message' => 'Error updating book: ' . $stmt->error]);
-        }
-    }
-
-    public function deleteBook($isbn) {
-        $sql = "DELETE FROM books WHERE isbn=?";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bind_param("s", $isbn);
-
-        if ($stmt->execute()) {
-            return json_encode(['status' => 'success', 'message' => 'Book deleted successfully.']);
-        } else {
-            return json_encode(['status' => 'error', 'message' => 'Error deleting book: ' . $stmt->error]);
-        }
-    }
+    
 
     public function searchBooks($query) {
         $searchTerm = "%" . $query . "%";
@@ -121,8 +112,8 @@ class BookController {
 
     public function getBookDetails($isbn) {
         $sql = "SELECT b.isbn, b.title, b.author, p.name AS publisher, b.publication_year, b.number_of_pages,
-                       (SELECT COUNT(*) FROM borrows WHERE isbn = b.isbn AND return_date IS NULL) AS borrowed_count,
-                       (SELECT COUNT(*) FROM copies WHERE isbn = b.isbn) AS total_copies
+                (SELECT COUNT(*) FROM borrows WHERE isbn = b.isbn AND return_date IS NULL) AS borrowed_count,
+                (SELECT COUNT(*) FROM copies WHERE isbn = b.isbn) AS total_copies
                 FROM books b
                 LEFT JOIN publishers p ON b.publisher_id = p.publisher_id
                 WHERE b.isbn = ?";
@@ -142,20 +133,36 @@ class BookController {
         }
     }
     
-    
     public function getAllBooks() {
-        $sql = "SELECT * FROM books";
+        $sql = "SELECT b.isbn, b.title, b.author, b.publication_year, b.number_of_pages,
+        p.name AS publisher,
+        (SELECT COUNT(*) FROM copies WHERE isbn = b.isbn) AS total_copies
+        FROM books b
+        LEFT JOIN publishers p ON b.publisher_id = p.publisher_id";
+
+        
         $result = $this->conn->query($sql);
+        
+        if ($result === false) {
+            echo json_encode(['status' => 'error', 'message' => 'Query error: ' . $this->conn->error]);
+            return;
+        }
 
         $books = [];
         while ($row = $result->fetch_assoc()) {
             $books[] = $row;
         }
 
-        return json_encode($books);
+        if (empty($books)) {
+            echo json_encode(['status' => 'success', 'message' => 'No books found', 'data' => $books]);
+        } else {
+            echo json_encode(['status' => 'success', 'message' => 'Books retrieved successfully', 'data' => $books]);
+        }
     }
+
 }
 
+// Switch case
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     ini_set('display_errors', 1);
     ini_set('display_startup_errors', 1);
@@ -178,27 +185,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $category_ids
             );
             break;
-        case 'editBook':
-            echo $controller->editBook(
-                $_POST['isbn'],
-                $_POST['title'],
-                $_POST['author'],
-                $_POST['publication_year'],
-                $_POST['number_of_pages'],
-                $_POST['publisher_id']
-            );
-            break;
+
         case 'deleteBook':
             echo $controller->deleteBook($_POST['isbn']);
             break;
         case 'getBookDetails':
             echo $controller->getBookDetails($_POST['isbn']);
             break;
+        
+        case 'getAllBooks':
+            $controller->getAllBooks();
+            break;
         default:
             echo json_encode(['status' => 'error', 'message' => 'Invalid action']);
             break;
     }
-    
 } elseif ($_SERVER['REQUEST_METHOD'] == 'GET') {
-    // Handle GET requests if necessary (e.g., for getAllBooks action)
+    // Handle GET requests here if needed
 }
